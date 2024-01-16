@@ -1,5 +1,6 @@
 import os
 import time
+import requests
 from flask import Flask, jsonify
 import mysql.connector
 from flask_cors import CORS
