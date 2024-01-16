@@ -1,6 +1,34 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 import mysql.connector
+from flask_cors import CORS
+
+server = Flask(__name__)
+CORS(server)
+
+@server.route('/api/time')
+def get_current_time():
+        return jsonify({'time': time.time()})
+
+@server.route('/api/gios-data')
+def get_gios_data():
+        try:
+                response = requests.get('https://api.gios.gov.pl/pjp-api/rest/station/findAll')
+                response.raise_for_status()
+                data = response.json()
+                return jsonify(data)
+        except requests.RequestException as e:
+                return jsonify({'error': str(e)}), 500
+
+@server.route('/api/air-quality-index/<int:stationId>')
+def get_air_quality_index(stationId):
+        try:
+                response = requests.get(f'https://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/{stationId}')
+                response.raise_for_status()
+                data = response.json()
+                return jsonify(data)
+        except requests.RequestException as e:
+                return jsonify({'error': str(e)}), 500
 
 
 class DBManager:
@@ -26,11 +54,9 @@ class DBManager:
         self.cursor.execute('SELECT title FROM blog')
         rec = []
         for c in self.cursor:
-            rec.append(c[0])
+            rec.serverend(c[0])
         return rec
 
-
-server = Flask(__name__)
 conn = None
 
 @server.route('/')
@@ -47,5 +73,6 @@ def listBlog():
     return response
 
 
+
 if __name__ == '__main__':
-    server.run()
+        server.run(debug=True)
