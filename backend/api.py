@@ -3,7 +3,7 @@ import time
 import requests
 from flask import Flask, jsonify
 from flask_cors import CORS
-import dbmanager as db
+from dbmanager import DBManager
 
 server = Flask(__name__)
 CORS(server)
@@ -24,17 +24,26 @@ def get_gios_data():
 
 @server.route('/api/air-quality-index/<int:stationId>')
 def get_air_quality_index(stationId):
-        db_instance = db.DBManager(password_file='/run/secrets/db-password')
-        titles = db_instance.query_titles()
-        db_instance.close_connection()
-
         try:
                 response = requests.get(f'https://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/{stationId}')
                 response.raise_for_status()
                 data = response.json()
-                return jsonify({'title': titles[-1], 'aqi': data})
+                return jsonify(data)
         except requests.RequestException as e:
                 return jsonify({'error': str(e)}), 500
+
+@server.route('/')
+def listBlog():
+    global conn
+    if not conn:
+        conn = DBManager()
+        conn.populate_db()
+    rec = conn.query_titles()
+
+    response = ''
+    for c in rec:
+        response = response  + '<div>   Hello  ' + c + '</div>'
+    return response
 
 if __name__ == '__main__':
         server.run(debug=True)
